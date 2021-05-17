@@ -4,212 +4,100 @@
 
 //#define CATCH_CONFIG_MAIN // defines main() automatically
 #include "lib/catch.hpp"
-#include "pqueue.hpp"
-#include <string.h>
+#include "sort.hpp"
 
+element* stations;
+element* tmpStations;
+int size;
+
+int setup(int* size) {
+    stations = (element*)malloc(sizeof(element)*6000);
+    tmpStations = (element*)malloc(sizeof(element)*6000);
+    FILE * fp;
+    char line[100]; // keeps one line of the file
+
+    // try to open the file; in case of an error exit the program
+    *size = 0;
+    fp = fopen("stations.csv", "r");
+    if (!fp) {
+        printf("Cannot open file stations.csv!\n");
+        return 1;
+    }
+    
+    // read all weather stations from file and add them to the
+    // hash table
+    while (!feof(fp)) {
+        // read one line and skip empty and comment lines
+        fgets(line, 100, fp);
+        if (line[0] == '#') continue;
+        if (isspace(line[0])) continue;
+        
+        line[strcspn(line, "\r\n")] = 0;
+        // take the first 4 characters as key value
+        strncpy(stations[*size].icao_code, line, 4);
+        stations[*size].icao_code[4] = '\0';
+        
+        // take the rest as value
+        strcpy(stations[*size].station_name, strchr(line, ';')+1);
+        *size += 1;
+    }
+    
+    // close the file
+    fclose(fp);
+    
+    return 0;
+}
+
+void teardown(){
+    free(stations);
+    free(tmpStations);
+}
+
+int compareByIcaoCode(element* a, element* b){
+    element *element_a = (element*) a;
+    element *element_b = (element*) b;
+    return strcmp(element_a->icao_code, element_b->icao_code);
+}
 
 // =====================
-// Priority Queue Testcases
+// Sorting Testcases
 // ---------------------
 
-TEST_CASE("Test1", "enqueue")
+TEST_CASE("Test1", "selectionSort")
 {
-    pqueue *queue = p_init();
-
-    p_enqueue(queue, "Microsoft", 6);
-    p_enqueue(queue, "AMD", 10);
-    p_enqueue(queue, "Apple", 1);
-    p_enqueue(queue, "Tesla", 7);
-    p_enqueue(queue, "Qualcomm", 8);
-    
-    INFO("Test Case for enqueue: Queue not linked correctly yet.");
-    element *tmp = queue->head;
-    for(int i = 0; i < 5; i++){
-        REQUIRE(tmp != NULL);
-        tmp = tmp->next;
+    setup(&size);
+    selection_sort(stations, size);
+    for (int i = 0; i < size - 1; i++)
+    {
+        INFO("Test Case for SelectionSort: some elements are not sorted correctly.");
+        REQUIRE(strcmp(stations[i].station_name, stations[i + 1].station_name) <= 0);
     }
-    REQUIRE(tmp == NULL);
+    teardown();
 }
 
-TEST_CASE("Test2", "enqueue")
+
+TEST_CASE("Test2", "mergeSort")
 {
-    pqueue *queue = p_init();
-    char *customers[6] = {(char*)"Apple",(char*)"Microsoft",(char*)"Tesla",(char*)"Qualcomm",(char*)"AMD"};
-    
-    p_enqueue(queue, "Microsoft", 6);
-    p_enqueue(queue, "AMD", 10);
-    p_enqueue(queue, "Apple", 1);
-    p_enqueue(queue, "Tesla", 7);
-    p_enqueue(queue, "Qualcomm", 8);
-    
-    INFO("Test Case for enqueue: Queue not ordered or linked correctly yet.");
-    element *tmp = queue->head;
-    for(int i = 0; i < 5; i++){
-        REQUIRE(tmp != NULL);
-        REQUIRE(strcmp(tmp->data, customers[i]) == 0);
-        tmp = tmp->next;
+    setup(&size);
+    merge_sort(stations, tmpStations, 0, size-1);
+    for (int i = 0; i < size - 1; i++)
+    {
+        INFO("Test Case for MergeSort: some elements are not sorted correctly.");
+        REQUIRE(strcmp(stations[i].station_name, stations[i + 1].station_name) >= 0);
+        
     }
+    teardown();
 }
 
-TEST_CASE("Test3", "enqueue")
+TEST_CASE("Test3", "selectionSortFP")
 {
-    pqueue *queue = p_init();
-
-    p_enqueue(queue, "Microsoft", 6);
-    p_enqueue(queue, "AMD", 10);
-    p_enqueue(queue, "Apple", 1);
-    p_enqueue(queue, "Tesla", 7);
-    p_enqueue(queue, "Qualcomm", 8);
-    
-    INFO("Test Case for enqueue: element count not correct.");
-    REQUIRE(queue->count == 5);
-}
-
-TEST_CASE("Test4", "peek")
-{
-    pqueue *queue = p_init();
-
-    p_enqueue(queue, "Microsoft", 6);
-    p_enqueue(queue, "AMD", 10);
-    p_enqueue(queue, "Apple", 1);
-    p_enqueue(queue, "Tesla", 7);
-    p_enqueue(queue, "Qualcomm", 8);
-    
-    element *tmp = p_peek(queue);
-    INFO("Test Case for peek: no element returned yet.");
-    REQUIRE(tmp != NULL);
-    INFO("Test Case for peek: wrong element returned.");
-    REQUIRE(strcmp(tmp->data, "Apple") == 0);
-}
-
-TEST_CASE("Test5", "peek")
-{
-    element *tmp = p_peek(NULL);
-    INFO("Test Case for peek: handle NULL values.");
-    REQUIRE(tmp == NULL);
-}
-
-TEST_CASE("Test6", "dequeue")
-{
-    pqueue *queue = p_init();
-
-    p_enqueue(queue, "Microsoft", 6);
-    p_enqueue(queue, "AMD", 10);
-    p_enqueue(queue, "Apple", 1);
-    p_enqueue(queue, "Tesla", 7);
-    p_enqueue(queue, "Qualcomm", 8);
-    p_dequeue(queue);
-    
-    INFO("Test Case for dequeue: dequeue not working correctly yet.");
-    REQUIRE(queue->head != NULL);
-    REQUIRE(strcmp(queue->head->data, "Microsoft") == 0);
-    REQUIRE(queue->head->priority == 6);
-}
-
-TEST_CASE("Test7", "dequeue")
-{
-    pqueue *queue = p_init();
-
-    p_enqueue(queue, "Microsoft", 6);
-    p_enqueue(queue, "AMD", 10);
-    p_enqueue(queue, "Apple", 1);
-    p_enqueue(queue, "Tesla", 7);
-    p_enqueue(queue, "Qualcomm", 8);
-    p_dequeue(queue);
-    
-    INFO("Test Case for dequeue: queue count not correct.");
-    REQUIRE(queue->count == 4);
-}
-
-TEST_CASE("Test8", "dequeue")
-{
-    pqueue *queue = p_init();
-
-    p_enqueue(queue, "Microsoft", 6);
-    p_enqueue(queue, "AMD", 10);
-    p_enqueue(queue, "Apple", 1);
-    p_enqueue(queue, "Tesla", 7);
-    p_enqueue(queue, "Qualcomm", 8);
-    p_dequeue(queue);
-    p_dequeue(queue);
-    p_dequeue(queue);
-    p_dequeue(queue);
-    p_dequeue(queue);
-    
-    INFO("Test Case for dequeue all: not working correctly.");
-    REQUIRE(queue->head == NULL);
-    REQUIRE(queue->count == 0);
-}
-
-TEST_CASE("Test9", "incrementPriority")
-{
-    pqueue *queue = p_init();
-
-    p_enqueue(queue, "Microsoft", 6);
-    p_enqueue(queue, "AMD", 10);
-    p_enqueue(queue, "Apple", 2);
-    p_enqueue(queue, "Tesla", 7);
-    p_enqueue(queue, "Qualcomm", 8);
-
-    p_incrementPriority(queue, "Tesla", 1);
-    
-    INFO("Test Case for incrementePriority: order of queue not updated accordingly to priority.");
-    REQUIRE(queue->head != NULL);
-    REQUIRE(strcmp(queue->head->data, "Tesla") == 0);
-    REQUIRE(queue->head->priority == 1);
-}
-
-TEST_CASE("Test10", "incrementPriority")
-{
-    pqueue *queue = p_init();
-
-    p_enqueue(queue, "Microsoft", 6);
-    p_enqueue(queue, "AMD", 10);
-    p_enqueue(queue, "Apple", 1);
-    p_enqueue(queue, "Tesla", 7);
-    p_enqueue(queue, "Qualcomm", 8);
-
-    p_incrementPriority(queue, "Apple", 9);
-    p_incrementPriority(queue, "Microsoft", 2);
-    
-    INFO("Test Case for incrementePriority: priority only needs to update if it's higher than before.");
-    REQUIRE(queue->head != NULL);
-    REQUIRE(strcmp(queue->head->data, "Apple") == 0);
-    REQUIRE(queue->head->priority == 1);
-    REQUIRE(queue->head->next != NULL);
-    REQUIRE(strcmp(queue->head->next->data, "Microsoft") == 0);
-    REQUIRE(queue->head->next->priority == 2);
-}
-
-TEST_CASE("Test11", "isEmpty")
-{
-    pqueue *queue = p_init();
-
-    INFO("Test Case for isEmpty: queue should be empty.");
-    REQUIRE(p_isEmpty(queue) == 1);
-}
-
-TEST_CASE("Test12", "isEmpty")
-{
-    pqueue *queue = p_init();
-    
-    p_enqueue(queue, "Microsoft", 6);
-
-    INFO("Test Case for isEmpty: queue should not be empty.");
-    REQUIRE(p_isEmpty(queue) == 0);
-}
-
-TEST_CASE("Test13", "print")
-{
-    pqueue *queue = p_init();
-    
-    p_enqueue(queue, "Microsoft", 6);
-    p_enqueue(queue, "AMD", 10);
-    p_enqueue(queue, "Apple", 1);
-    p_enqueue(queue, "Tesla", 7);
-    p_enqueue(queue, "Qualcomm", 8);
-
-    INFO("Test Case for print: printing... (manual grading)");
-    p_print(queue);
-    REQUIRE(0 == 0);
+    setup(&size);
+    selection_sort_fp(stations, size, compareByIcaoCode);
+    for (int i = 0; i < size - 1; i++)
+    {
+        INFO("Test Case for SelectionSortFP: some elements are not sorted correctly.");
+        REQUIRE(strcmp(stations[i].icao_code, stations[i + 1].icao_code) <= 0);
+        
+    }
+    teardown();
 }
