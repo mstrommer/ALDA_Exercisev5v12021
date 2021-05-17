@@ -53,12 +53,6 @@ void teardown(){
     free(tmpStations);
 }
 
-int compareByIcaoCode(element* a, element* b){
-    element *element_a = (element*) a;
-    element *element_b = (element*) b;
-    return strcmp(element_a->icao_code, element_b->icao_code);
-}
-
 // =====================
 // Sorting Testcases
 // ---------------------

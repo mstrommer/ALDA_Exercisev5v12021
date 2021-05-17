@@ -22,5 +22,6 @@ void selection_sort(element* stations, int size);
 void merge_sort(element* stations, element* tmpStations, int left, int right);
 // selection sort supporting custom compare function:
 void selection_sort_fp(element* stations, int size, int (*comp)(element*, element*));
+int compareByIcaoCode(element* a, element* b);
 
 #endif /* sort_hpp */
