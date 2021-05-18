@@ -48,50 +48,58 @@ int setup(int* size) {
     return 0;
 }
 
-void teardown(){
-    free(stations);
-    free(tmpStations);
-}
-
 // =====================
 // Sorting Testcases
 // ---------------------
 
 TEST_CASE("Test1", "selectionSort")
 {
+    int error = false;
+    int i;
     setup(&size);
     selection_sort(stations, size);
-    for (int i = 0; i < size - 1; i++)
+    for (i = 0; i < size - 1; i++)
     {
-        INFO("Test Case for SelectionSort: some elements are not sorted correctly.");
-        REQUIRE(strcmp(stations[i].station_name, stations[i + 1].station_name) <= 0);
+        if(strcmp(stations[i].station_name, stations[i + 1].station_name) > 0){
+            error = true;
+            break;
+        }
     }
-    teardown();
+    INFO("Test Case for SelectionSort: some elements are not sorted correctly (" << i << ":" << stations[i].station_name << " > " << i + 1 << ":" << stations[i + 1].station_name << ")!");
+    REQUIRE(error == false);
 }
 
 
 TEST_CASE("Test2", "mergeSort")
 {
+    int error = false;
+    int i;
     setup(&size);
     merge_sort(stations, tmpStations, 0, size-1);
-    for (int i = 0; i < size - 1; i++)
+    for (i = 0; i < size - 1; i++)
     {
-        INFO("Test Case for MergeSort: some elements are not sorted correctly.");
-        REQUIRE(strcmp(stations[i].station_name, stations[i + 1].station_name) >= 0);
-        
+        if(strcmp(stations[i].station_name, stations[i + 1].station_name) < 0){
+            error = true;
+            break;
+        }
     }
-    teardown();
+    INFO("Test Case for MergeSort: some elements are not sorted correctly (" << i << ":" << stations[i].station_name << " < " << i + 1 << ":" << stations[i + 1].station_name << ")!");
+    REQUIRE(error == false);
 }
 
 TEST_CASE("Test3", "selectionSortFP")
 {
+    int error = false;
+    int i;
     setup(&size);
     selection_sort_fp(stations, size, compareByIcaoCode);
-    for (int i = 0; i < size - 1; i++)
+    for (i = 0; i < size - 1; i++)
     {
-        INFO("Test Case for SelectionSortFP: some elements are not sorted correctly.");
-        REQUIRE(strcmp(stations[i].icao_code, stations[i + 1].icao_code) <= 0);
-        
+        if(strcmp(stations[i].icao_code, stations[i + 1].icao_code) > 0){
+            error = true;
+            break;
+        }
     }
-    teardown();
+    INFO("Test Case for SelectionSort using Function Pointer: some elements are not sorted correctly (" << i << ":" << stations[i].icao_code << " > " << i + 1 << ":" << stations[i + 1].icao_code << ")!");
+    REQUIRE(error == false);
 }
